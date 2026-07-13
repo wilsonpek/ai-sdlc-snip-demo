@@ -1,0 +1,48 @@
+# .github/workflows/bundle.yml
+# Assembles backend + Angular SPA + CLI into the 'bundle' branch.
+#
+# ⚠️  No 'push' trigger — intentional.
+# GitHub loads workflow files from the branch being pushed. This file only
+# exists on 'main', so a push to 'backend', 'frontend', or 'cli' would
+# never find it and the workflow would silently not run. The hourly cron
+# + workflow_dispatch cover all upstream-change scenarios instead.
+
+name: Build bundle
+
+on:
+  schedule:
+    - cron: '0 * * * *'    # every hour at :00
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout main (full history + submodules)
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          submodules: true
+          fetch-depth: 0          # shallow clone would block git push
+
+      - name: Set up Node 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Configure git identity and token for submodule pushes
+        run: |
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
+          # Rewrite every github.com HTTPS URL to inject the Actions token so
+          # that git push inside submodule working trees works without extra setup.
+          git config --global \
+            url."https://x-access-token:${{ github.token }}@github.com/".insteadOf \
+            "https://github.com/"
+
+      - name: Build and push bundle
+        run: node scripts/build-bundle.mjs --push
