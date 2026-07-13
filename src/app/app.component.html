@@ -1,0 +1,66 @@
+<div class="hero">
+  <div class="glow" aria-hidden="true"></div>
+  <h1 class="hero-title">Paste a link, make it <span class="gradient-text">Snip</span></h1>
+  <p class="hero-sub">Free, instant URL shortening — no account needed.</p>
+
+  <form class="shorten-form" (ngSubmit)="shorten()">
+    <div class="input-pill">
+      <input
+        class="url-input"
+        type="url"
+        name="url"
+        [(ngModel)]="urlValue"
+        placeholder="https://your-long-url.com"
+        autocomplete="off"
+        aria-label="URL to shorten"
+      />
+      <button class="shorten-btn" type="submit" [disabled]="loading()">
+        {{ loading() ? '…' : 'Snip it' }}
+      </button>
+    </div>
+
+    @if (apiError()) {
+      <p class="notice error-notice">{{ apiError() }}</p>
+    }
+    @if (newLink()) {
+      <p class="notice success-notice">
+        <span class="notice-label">Your link →</span>
+        <a [href]="newLink()!.shortUrl" target="_blank" rel="noopener">{{ newLink()!.shortUrl }}</a>
+      </p>
+    }
+  </form>
+</div>
+
+@if (links().length > 0) {
+  <section class="links-section">
+    <h2 class="section-title">All links</h2>
+    <div class="card">
+      <table class="links-table">
+        <thead>
+          <tr>
+            <th>Code</th>
+            <th>Original URL</th>
+            <th>Hits</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (link of links(); track link.code) {
+            <tr>
+              <td>
+                <a class="code-link" [href]="link.shortUrl" target="_blank" rel="noopener">
+                  {{ link.code }}
+                </a>
+              </td>
+              <td class="url-cell">
+                <a [href]="link.url" target="_blank" rel="noopener" [title]="link.url">
+                  {{ link.url }}
+                </a>
+              </td>
+              <td class="hits-cell">{{ link.hits }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </section>
+}
