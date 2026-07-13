@@ -139,3 +139,36 @@ git push
 
 Repeat for `frontend` or `cli` as needed. Running
 `git submodule update --remote` without a path updates all three at once.
+
+## bundle branch — generated deployment package
+
+The `bundle` branch is machine-generated output assembled by
+`scripts/build-bundle.mjs`. It contains everything needed to deploy or
+Docker-ise the app in one place:
+
+| File / Dir | Source |
+|------------|--------|
+| `server.js` | copied from `backend` branch |
+| `cli.js` | copied from `cli` branch |
+| `public/` | Angular build output from `frontend` branch |
+| `.env` | generated — `PUBLIC_DIR=./public` (Bun auto-loads) |
+| `package.json` | generated — `start: "bun server.js"`, no `type` field |
+| `Dockerfile` | generated — `FROM oven/bun:1-alpine` |
+| `railway.json` | generated — DOCKERFILE builder |
+
+```
+main/
+└── bundle/   ← submodule → branch: bundle  (generated)
+```
+
+### Regenerating
+
+```sh
+# dry run — commits locally, does not push
+node scripts/build-bundle.mjs
+
+# publish — commits + pushes bundle and main
+node scripts/build-bundle.mjs --push
+```
+
+The script is a **safe no-op** when nothing has changed upstream.
